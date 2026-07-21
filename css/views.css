@@ -833,6 +833,61 @@ textarea.input-text {
     margin: var(--space-2) 0;
 }
 
+/* ---- AI Decision Support card (dashboard) ---- */
+.btn-sm { padding: 4px 12px; font-size: var(--text-sm); }
+
+.ai-decision-top {
+    display: flex;
+    align-items: center;
+    gap: var(--space-4);
+    margin-bottom: var(--space-2);
+}
+.ai-decision-top #dash-ai-gauge { flex: 0 0 150px; width: 150px; }
+.ai-decision-verdict { display: flex; flex-direction: column; gap: var(--space-2); }
+.ai-decision-verdict .badge { align-self: flex-start; font-size: var(--text-base); padding: 6px 14px; }
+.ai-decision-meta { font-size: var(--text-sm); color: var(--text-secondary); }
+
+.rec-actions { display: flex; flex-direction: column; gap: var(--space-2); margin-bottom: var(--space-3); }
+.rec-action {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+}
+.rec-num {
+    flex: 0 0 auto;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--primary-blue);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+}
+.rec-text { flex: 1; color: var(--text-dark); line-height: 1.35; }
+.rec-buttons { display: inline-flex; gap: var(--space-2); flex-shrink: 0; }
+.rec-action.acked { opacity: 0.55; }
+.rec-action.acked .rec-num { background: var(--success-green); }
+
+.escalation-strip {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding-top: var(--space-4);
+    margin-top: auto;
+    border-top: 1px solid var(--border-color);
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+}
+.escalation-strip strong { color: var(--text-dark); }
+
 /* Keep the (tall) detail panel from towering over the donut beside it. */
 .sensor-detail-scroll {
     max-height: 460px;

@@ -23,7 +23,7 @@ import { refresh, navigate } from '../router.js';
 import {
     DISTRICT_RISK, districtsByRisk, STRIKE_SUMMARY, STORM_CELLS, WEATHER_NOW,
     SENSOR_HEALTH, RESOURCES, SHELTER_OCCUPANCY, INFRA_IMPACT, RESPONSE_STEPS,
-    AI_FORECAST, ALERTS, INCIDENTS, INCIDENT_SUMMARY,
+    AI_FORECAST, ALERTS, INCIDENTS, INCIDENT_SUMMARY, ESCALATION_MATRIX,
     riskCounts, highRiskDistrictCount, populationUnderAlert, alertCounts, sensorCounts, elevatedDistrictCount
 } from '../data/mock.js';
 
@@ -171,30 +171,58 @@ function stormCellsCard() {
     });
 }
 
+/** Current escalation tier, derived from the AI severity band. */
+function currentEscalation() {
+    const lvl = { severe: 3, warning: 2, watch: 1, normal: 1 }[AI_FORECAST.severity] || 1;
+    return ESCALATION_MATRIX.find((m) => m.level === lvl) || ESCALATION_MATRIX[0];
+}
+
+/** The AI's recommended next-best actions (the model's recommendation first). */
+function recommendedActions() {
+    const top = districtsByRisk()[0];
+    return [
+        { text: AI_FORECAST.recommendation, execute: '#/alerts' },
+        { text: `Pre-position SDRF / NDRF for ${top.name}`, execute: '#/incidents' },
+        { text: `Run Level ${currentEscalation().level} automated SOP`, execute: '#/alerts?tab=automation' }
+    ];
+}
+
+/** AI Decision Support — gauge + verdict, an actionable recommendation list,
+    and the escalation/ownership strip. */
 function aiRiskCard() {
+    const esc_ = currentEscalation();
     return card({
-        title: 'AI Risk Intelligence',
+        title: 'AI Decision Support',
         subtitle: AI_FORECAST.modelVersion,
         actions: `<a class="link-btn" href="#/ai-risk">Details</a>`,
+        bodyClass: 'flex-col',
         body: `
-            <div class="operational-split-grid">
-                <div class="gauge-column">
-                    <div id="dash-ai-gauge"></div>
-                    <div class="gauge-verdict">
-                        <span class="badge bg-red font-semibold">${AI_FORECAST.riskScore}% ${AI_FORECAST.severity.toUpperCase()} RISK</span>
-                    </div>
-                </div>
-                <div class="metrics-column">
-                    ${statRow('Expected arrival', `${AI_FORECAST.etaMins} mins`, { bold: true, tone: 'red' })}
-                    ${statRow('Storm direction', AI_FORECAST.direction)}
-                    ${statRow('Expected duration', `${AI_FORECAST.durationMins} mins`)}
-                    ${statRow('Confidence', `${AI_FORECAST.confidence}%`)}
-                    ${statRow('Severity', severityBadge(AI_FORECAST.severity))}
+            <div class="ai-decision-top">
+                <div id="dash-ai-gauge"></div>
+                <div class="ai-decision-verdict">
+                    ${badge(`${AI_FORECAST.riskScore}% ${AI_FORECAST.severity.toUpperCase()}`, severityTone(AI_FORECAST.severity), { solid: true })}
+                    <div class="ai-decision-meta">Confidence ${AI_FORECAST.confidence}% · duration ${AI_FORECAST.durationMins}m</div>
                 </div>
             </div>
-            <div class="ai-warning-banner">
-                <i data-lucide="alert-triangle"></i>
-                <span>${esc(AI_FORECAST.recommendation)}</span>
+            <div class="detail-group">Recommended Actions</div>
+            <div class="rec-actions">
+                ${recommendedActions()
+                    .map(
+                        (a, i) => `
+                    <div class="rec-action">
+                        <span class="rec-num">${i + 1}</span>
+                        <span class="rec-text">${esc(a.text)}</span>
+                        <span class="rec-buttons">
+                            <a class="btn btn-primary btn-sm" href="${esc(a.execute)}">Execute</a>
+                            <button class="btn btn-sm rec-ack">Ack</button>
+                        </span>
+                    </div>`
+                    )
+                    .join('')}
+            </div>
+            <div class="escalation-strip">
+                <span>Escalation <strong>L${esc_.level} · ${esc(esc_.name)}</strong></span>
+                <span>Owner <strong>${esc(esc_.owner)}</strong></span>
             </div>`
     });
 }
@@ -490,10 +518,20 @@ export default {
     mount(root) {
         mkChart('#dash-ai-gauge', gaugeOptions({
             value: AI_FORECAST.riskScore,
-            color: PALETTE.red,
+            color: PALETTE[severityTone(AI_FORECAST.severity)] || PALETTE.red,
             label: 'Risk score',
-            height: 140
+            height: 150
         }));
+
+        // Acknowledge a recommended action (visual only — demo).
+        root.querySelectorAll('.rec-ack').forEach((btn) => {
+            btn.addEventListener('click', () => {
+                const row = btn.closest('.rec-action');
+                if (row) row.classList.add('acked');
+                btn.textContent = 'Acked';
+                btn.disabled = true;
+            });
+        });
 
         mkChart('#dash-latency-chart', sparkOptions({
             data: SENSOR_HEALTH.latencyTrend,
