@@ -239,14 +239,27 @@ export function addSensorLayer(map, sensors, { onClick } = {}) {
             weight: 2,
             fillOpacity: 0.9
         });
-        marker.bindPopup(`
+        const detailHtml = `
             <div class="map-popup">
-                <div class="map-popup-title">${esc(s.id)}</div>
+                <div class="map-popup-title">${esc(s.name || s.id)}</div>
+                <div class="map-popup-row"><span>ID</span><strong>${esc(s.id)}</strong></div>
                 <div class="map-popup-row"><span>Type</span><strong>${esc(s.type)}</strong></div>
+                ${s.vendor ? `<div class="map-popup-row"><span>Vendor</span><strong>${esc(s.vendor)}</strong></div>` : ''}
                 <div class="map-popup-row"><span>District</span><strong>${esc(s.districtName)}</strong></div>
                 <div class="map-popup-row"><span>Status</span><strong style="color:${colors[s.status]}">${esc(s.status)}</strong></div>
+                ${s.protocol ? `<div class="map-popup-row"><span>Protocol</span><strong>${esc(s.protocol)}</strong></div>` : ''}
                 <div class="map-popup-row"><span>Battery</span><strong>${esc(s.battery)}%</strong></div>
-            </div>`);
+                <div class="map-popup-row"><span>Signal</span><strong>${esc(s.signal)}%</strong></div>
+            </div>`;
+        marker.bindPopup(detailHtml);
+        // Point at a sensor → its details show (and the dot enlarges).
+        marker.bindTooltip(detailHtml, { direction: 'top', sticky: true, opacity: 1, className: 'sensor-tooltip' });
+        marker.on('mouseover', function () {
+            this.setStyle({ radius: 8, weight: 3 });
+        });
+        marker.on('mouseout', function () {
+            this.setStyle({ radius: 5, weight: 2 });
+        });
         if (onClick) marker.on('click', () => onClick(s));
         layer.addLayer(marker);
     });

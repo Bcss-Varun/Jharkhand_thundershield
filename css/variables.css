@@ -147,6 +147,13 @@
     padding: 0;
 }
 
+/* The `hidden` attribute must always win — otherwise a class that sets its own
+   `display` (flex/grid/inline-flex) keeps the element visible, which is what
+   made the wizard steps and modals show when they should be hidden. */
+[hidden] {
+    display: none !important;
+}
+
 body {
     font-family: var(--font-family);
     background-color: var(--bg-app);

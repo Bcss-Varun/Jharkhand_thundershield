@@ -196,12 +196,37 @@ export const EFM = {
 
 /* ------------------------------------------------------------------ Sensors */
 
-const SENSOR_TYPES = ['Lightning Detector', 'EFM', 'AWS', 'Rain Gauge', 'Wind Sensor'];
+export const SENSOR_TYPES = ['Lightning Detector', 'EFM', 'AWS', 'Rain Gauge', 'Wind Sensor'];
+
+/** Every measurable a sensor can report — the multi-select in the add wizard. */
+export const DATA_PARAMETERS = [
+    'Temperature', 'Humidity', 'Pressure', 'Rainfall', 'Wind Speed', 'Wind Direction',
+    'Electric Field', 'Lightning Count', 'Strike Distance', 'Peak Current', 'Visibility'
+];
+
+/** Per-type defaults: what it measures, its unit, and warning/critical bands. */
+export const SENSOR_TYPE_META = {
+    'Lightning Detector': { params: ['Lightning Count', 'Strike Distance', 'Peak Current'], unit: 'strikes/min', warn: 15, crit: 30, freq: '1 Hz' },
+    'EFM':                { params: ['Electric Field'], unit: 'kV/m', warn: 2, crit: 4, freq: '10 Hz' },
+    'AWS':                { params: ['Temperature', 'Humidity', 'Pressure', 'Wind Speed', 'Wind Direction'], unit: 'mixed', warn: 60, crit: 90, freq: '1/min' },
+    'Rain Gauge':         { params: ['Rainfall'], unit: 'mm', warn: 50, crit: 100, freq: '1/min' },
+    'Wind Sensor':        { params: ['Wind Speed', 'Wind Direction'], unit: 'km/h', warn: 40, crit: 60, freq: '1 Hz' }
+};
+
+export const SENSOR_VENDORS = ['Vaisala', 'Campbell Scientific', 'Biral', 'Earth Networks', 'Lufft', 'NESA'];
+export const DEPARTMENTS = ['Disaster Management', 'IMD Jharkhand', 'Mining Department', 'Power Utilities', 'Forest Department'];
+export const PROTOCOLS = ['REST API', 'MQTT', 'Modbus', 'OPC-UA', 'TCP/IP', 'LoRaWAN', 'NB-IoT', 'RS485'];
+export const CONNECTION_METHODS = ['API', 'Gateway', 'Direct'];
+export const AUTH_TYPES = ['API Key', 'Username & Password', 'OAuth', 'Certificate'];
+export const POLLING_INTERVALS = ['30 sec', '1 min', '5 min'];
+const SITE_KINDS = ['Control Room', 'Block Office', 'Grid Station', 'Mine Site', 'Forest Range', 'School Campus', 'AWS Tower'];
 
 export const SENSORS = range(64, (i) => {
+    // The base object keeps the ORIGINAL rng() sequence untouched, so existing
+    // sensor data (and everything generated after it) is identical to before.
     const d = pick(DISTRICT_RISK);
     const status = rng() > 0.92 ? 'offline' : rng() > 0.88 ? 'degraded' : 'online';
-    return {
+    const base = {
         id: `SEN-${String(1001 + i)}`,
         type: pick(SENSOR_TYPES),
         districtId: d.id,
@@ -216,6 +241,32 @@ export const SENSORS = range(64, (i) => {
         firmware: `v${2 + Math.floor(rng() * 2)}.${Math.floor(rng() * 9)}.${Math.floor(rng() * 9)}`,
         installedOn: `20${20 + Math.floor(rng() * 5)}-${String(1 + Math.floor(rng() * 12)).padStart(2, '0')}-15`,
         lastCalibrated: `2026-${String(1 + Math.floor(rng() * 6)).padStart(2, '0')}-${String(1 + Math.floor(rng() * 28)).padStart(2, '0')}`
+    };
+    // Enrichment is DETERMINISTIC (index-based, no rng) so it doesn't perturb
+    // the seeded sequence — the existing sensors' core data is unchanged.
+    const meta = SENSOR_TYPE_META[base.type];
+    const pfx = d.id.slice(0, 3).toUpperCase();
+    return {
+        ...base,
+        name: `${base.type.split(' ')[0]}-${pfx}-${String(i + 1).padStart(3, '0')}`,
+        vendor: SENSOR_VENDORS[i % SENSOR_VENDORS.length],
+        model: `${base.type.replace(/[^A-Za-z]/g, '').slice(0, 3).toUpperCase()}-${1000 + ((i * 137) % 9000)}`,
+        department: DEPARTMENTS[i % DEPARTMENTS.length],
+        location: `${d.name} ${SITE_KINDS[i % SITE_KINDS.length]}`,
+        description: `${base.type} monitoring unit deployed at ${d.name}.`,
+        protocol: PROTOCOLS[i % PROTOCOLS.length],
+        connectionMethod: CONNECTION_METHODS[i % CONNECTION_METHODS.length],
+        gateway: `GW-${pfx}-${(i % 9) + 1}`,
+        ipHost: `10.42.${i % 255}.${((i * 7) % 254) + 1}`,
+        port: [1883, 502, 8080, 443, 5683][i % 5],
+        apiEndpoint: base.type === 'AWS' ? '/api/v1/weather' : '/api/v1/telemetry',
+        authType: AUTH_TYPES[i % AUTH_TYPES.length],
+        pollingInterval: POLLING_INTERVALS[i % POLLING_INTERVALS.length],
+        dataParameters: meta.params,
+        unit: meta.unit,
+        samplingFrequency: meta.freq,
+        warningThreshold: meta.warn,
+        criticalThreshold: meta.crit
     };
 });
 

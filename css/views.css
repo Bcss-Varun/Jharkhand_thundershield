@@ -604,6 +604,263 @@
     color: var(--text-dark);
 }
 
+/* Add New Sensor form */
+.add-sensor-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-4);
+}
+.add-sensor-form .field {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-1);
+    width: 100%;
+}
+.add-sensor-form .input-select {
+    width: 100%;
+}
+.input-text {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background: var(--surface);
+    color: var(--text-dark);
+    font-size: var(--text-base);
+    transition: border-color var(--transition);
+}
+.input-text:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px var(--tint-blue);
+}
+.input-text[readonly] {
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+}
+/* Modal / popup (Add New Sensor) */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background: rgba(15, 23, 42, 0.55);
+    backdrop-filter: blur(2px);
+}
+/* Without this, the class's display:flex overrides the `hidden` attribute and
+   the modal can never be dismissed. */
+.modal-overlay[hidden] {
+    display: none;
+}
+.modal {
+    background: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-popover);
+    width: 100%;
+    max-width: 640px;
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: var(--space-4) var(--space-5);
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-header h2 {
+    font-size: var(--text-lg);
+    font-weight: 700;
+    color: var(--text-dark);
+}
+.modal-body {
+    padding: var(--space-5);
+    overflow-y: auto;
+}
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    padding: var(--space-4) var(--space-5);
+    border-top: 1px solid var(--border-color);
+}
+
+/* Map popup — wider dialog, edge-to-edge map body */
+.modal-map {
+    max-width: 1120px;
+}
+.map-modal-body {
+    padding: 0;
+    position: relative;
+    height: min(700px, 82vh);
+}
+.map-modal-body .map-view {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+}
+
+/* Add-sensor 3-step wizard */
+.modal-wizard {
+    max-width: 780px;
+}
+.wizard-steps {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    padding: var(--space-4) var(--space-5) 0;
+    flex-wrap: wrap;
+}
+.wizard-step {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 6px 12px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-muted);
+    transition: color var(--transition), border-color var(--transition);
+}
+.wizard-num {
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 1px solid currentColor;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+}
+.wizard-step.active {
+    color: var(--primary-blue);
+    border-color: var(--primary-blue);
+}
+.wizard-step.active .wizard-num {
+    background: var(--primary-blue);
+    color: #fff;
+    border-color: var(--primary-blue);
+}
+.wizard-step.done {
+    color: var(--success-green);
+}
+.wizard-step.done .wizard-num {
+    background: var(--success-green);
+    color: #fff;
+    border-color: var(--success-green);
+}
+.wizard-line {
+    width: 28px;
+    height: 1px;
+    background: var(--border-color);
+}
+.field-full {
+    grid-column: 1 / -1;
+}
+textarea.input-text {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+.param-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: var(--space-2);
+}
+.param-check {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: 8px 10px;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: var(--text-sm);
+    cursor: pointer;
+    transition: border-color var(--transition), background-color var(--transition);
+}
+.param-check input {
+    accent-color: var(--primary-blue);
+}
+.param-check:has(input:checked) {
+    border-color: var(--primary-blue);
+    background: var(--tint-blue);
+    color: var(--primary-blue);
+    font-weight: 500;
+}
+.wizard-footer {
+    justify-content: space-between;
+    align-items: center;
+}
+.wizard-progress {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+}
+.wizard-actions {
+    display: flex;
+    gap: var(--space-3);
+}
+
+/* Sensor detail — grouped sections */
+.detail-group {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    font-weight: 700;
+    color: var(--text-muted);
+    margin: var(--space-4) 0 var(--space-1);
+    padding-bottom: var(--space-1);
+    border-bottom: 1px solid var(--border-color);
+}
+.detail-group:first-of-type {
+    margin-top: var(--space-2);
+}
+.detail-params {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: var(--space-2) 0;
+}
+
+/* Keep the (tall) detail panel from towering over the donut beside it. */
+.sensor-detail-scroll {
+    max-height: 460px;
+    overflow-y: auto;
+}
+
+/* Table pagination */
+.pagination {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+    padding-top: var(--space-3);
+    border-top: 1px solid var(--border-color);
+}
+.pagination-info {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    font-variant-numeric: tabular-nums;
+    min-width: 180px;
+    text-align: center;
+}
+.btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+}
+
 /* Deferred-map gate (Sensor Network placement map opens on demand) */
 .map-gate {
     flex: 1;
@@ -1018,6 +1275,21 @@
     background-color: var(--surface-raised);
     color: var(--text-dark);
     box-shadow: var(--shadow-popover);
+}
+
+/* Sensor hover tooltip — theme-aware card, no directional arrow. */
+.leaflet-tooltip.sensor-tooltip {
+    min-width: 190px;
+    padding: 10px 12px;
+    border-radius: var(--radius-md);
+    background: var(--surface-raised);
+    border: 1px solid var(--border-color);
+    color: var(--text-dark);
+    box-shadow: var(--shadow-md);
+    white-space: normal;
+}
+.leaflet-tooltip.sensor-tooltip::before {
+    display: none;
 }
 
 
