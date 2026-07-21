@@ -1,0 +1,15 @@
+# Dependencies
+node_modules/
+
+# Build output (Vercel rebuilds this from source)
+dist/
+
+# Local env / editor / OS
+.env
+.env.*
+.vercel
+.DS_Store
+*.log
+
+# Local Claude Code settings (machine-specific)
+.claude/settings.local.json

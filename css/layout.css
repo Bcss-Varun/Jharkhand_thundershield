@@ -1,0 +1,489 @@
+.app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    overflow: hidden;
+    background-color: var(--bg-light-gray);
+}
+
+/* Sidebar — branded dark navy so the nav reads as a distinct rail, not a
+   plain white strip. Tokens are redefined in this scope so every descendant
+   (links, labels, footer metrics) flips to light-on-dark automatically. */
+.sidebar {
+    width: var(--sidebar-width);
+    flex-shrink: 0;
+    background: linear-gradient(180deg, #12233F 0%, #0A162B 100%);
+    border-right: 1px solid rgba(255, 255, 255, 0.06);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    z-index: 10;
+    transition: transform 0.3s ease, width 0.3s ease;
+    color: #F1F5F9;
+    --text-dark: #F1F5F9;
+    --text-secondary: #9FB2CE;
+    --text-muted: #6B84A6;
+    --border-color: rgba(255, 255, 255, 0.08);
+    --border-strong: rgba(255, 255, 255, 0.14);
+    --bg-light-gray: rgba(255, 255, 255, 0.06);
+    --pure-white: transparent;
+    --success-green: #34D399;
+}
+
+.sidebar-header {
+    height: var(--header-height);
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.main-logo {
+    max-height: 40px;
+    width: auto;
+    max-width: 100%;
+}
+
+.sidebar-nav {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px 0;
+}
+
+.sidebar-nav ul {
+    list-style: none;
+}
+
+.sidebar-nav li {
+    padding: 2px 12px;
+}
+
+.sidebar-nav li a {
+    display: flex;
+    align-items: center;
+    padding: 10px 16px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    font-size: 13.5px;
+    font-weight: 500;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+}
+
+.sidebar-nav li a i {
+    width: 16px;
+    height: 16px;
+    margin-right: 12px;
+    color: var(--text-secondary);
+    transition: color 0.2s ease;
+}
+
+.sidebar-nav li:hover a {
+    background-color: var(--bg-light-gray);
+    color: var(--text-dark);
+}
+
+.sidebar-nav li.active a {
+    color: #FFFFFF;
+    background-color: rgba(59, 130, 246, 0.22);
+    box-shadow: inset 3px 0 0 #3B82F6;
+}
+
+.sidebar-nav li.active a i {
+    color: #60A5FA;
+}
+
+.sidebar-footer {
+    padding: 16px 20px;
+    border-top: 1px solid var(--border-color);
+    background-color: var(--pure-white);
+}
+
+.system-metrics {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 11.5px;
+}
+
+.system-metrics .metric-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: var(--space-2);
+}
+
+.system-metrics .metric-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+}
+
+.system-metrics .metric-label {
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.system-metrics .metric-value {
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.system-metrics .text-green {
+    color: var(--success-green);
+}
+
+.status-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    margin-right: 6px;
+    display: inline-block;
+}
+
+.status-indicator.online {
+    background-color: var(--success-green);
+    box-shadow: 0 0 0 2px rgba(34, 197, 94, 0.2);
+}
+
+.powered-by {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding-top: 8px;
+}
+
+.powered-text {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+.footer-logo {
+    max-width: 140px;
+    height: auto;
+}
+
+/* The BCSS mark is dark-on-transparent, so it disappears against the dark
+   sidebar. Sit it on a light chip rather than inverting it — inverting would
+   misrepresent the brand colours. */
+:root[data-theme="dark"] .footer-logo {
+    background-color: rgba(255, 255, 255, 0.92);
+    border-radius: var(--radius-sm);
+    padding: 6px 8px;
+}
+
+.powered-subtext {
+    font-size: 9px;
+    color: var(--text-secondary);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    margin-top: -2px;
+}
+
+/* Main Wrapper */
+.main-wrapper {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-width: 0;
+    background-color: var(--bg-light-gray);
+    overflow: hidden;
+    position: relative;
+}
+
+/* Header */
+.top-header {
+    height: var(--header-height);
+    background-color: var(--surface-overlay);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 var(--page-padding);
+    flex-shrink: 0;
+    z-index: 5;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
+}
+
+/* View titles run long ("Jharkhand State Thunderstorm Command & Control
+   Center"). The header is a fixed --header-height, so the title must stay on
+   one line: it scales with the viewport and ellipsises only in the extreme. */
+.dashboard-title {
+    font-size: clamp(15px, 0.9vw + 8px, 22px);
+    font-weight: 700;
+    color: var(--text-dark);
+    margin: 0;
+    letter-spacing: -0.5px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dashboard-subtitle {
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-top: 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.header-weather, .header-datetime {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--text-dark);
+    font-weight: 500;
+    font-size: 14px;
+}
+
+.header-weather i {
+    color: var(--primary-blue);
+    width: 20px;
+    height: 20px;
+}
+
+.header-datetime {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+}
+
+.header-datetime #current-date {
+    font-size: 12px;
+    color: var(--text-secondary);
+}
+.header-datetime #current-time {
+    font-weight: 600;
+}
+
+.header-actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+}
+
+.icon-button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    position: relative;
+    color: var(--text-secondary);
+    transition: color 0.2s ease, transform 0.2s ease;
+}
+
+.icon-button:hover {
+    color: var(--text-dark);
+    transform: scale(1.05);
+}
+
+.notification-btn .badge {
+    position: absolute;
+    top: -4px;
+    right: -4px;
+    background-color: var(--critical-red);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    width: 16px;
+    height: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    box-shadow: 0 0 0 2px white;
+}
+
+.user-profile {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 8px;
+    transition: background-color 0.2s ease;
+}
+.user-profile:hover {
+    background-color: var(--bg-light-gray);
+}
+
+.avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(30, 94, 255, 0.1);
+    color: var(--primary-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    border: 1px solid rgba(30, 94, 255, 0.2);
+}
+
+.user-info {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+
+.user-name {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-dark);
+}
+
+.user-role {
+    font-size: 11px;
+    color: var(--text-secondary);
+}
+
+/* Main Content Area */
+.main-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--page-padding);
+    max-width: var(--max-width);
+    margin: 0 auto;
+    width: 100%;
+}
+
+/* Responsive Grid Layouts */
+.kpi-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+}
+
+.hero-section {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+    min-height: 560px;
+}
+
+.hero-right-panel {
+    display: flex;
+    flex-direction: column;
+    gap: var(--gap);
+}
+
+.hero-right-panel .card {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.hero-right-panel .card-body {
+    flex: 1;
+}
+
+.operational-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+}
+
+.resource-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+}
+
+.trends-section {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--gap);
+    margin-bottom: var(--gap);
+}
+
+/* Bottom Ticker */
+.bottom-ticker {
+    width: 100%;
+    height: var(--ticker-height);
+    background-color: var(--pure-white);
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    align-items: center;
+    z-index: 20;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+.ticker-label {
+    background-color: var(--critical-red);
+    color: white;
+    font-weight: 600;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    padding: 0 24px;
+    flex-shrink: 0;
+}
+
+.ticker-content-wrapper {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    position: relative;
+    padding: 0 24px;
+}
+
+.ticker-content {
+    display: inline-block;
+    animation: ticker 30s linear infinite;
+    color: var(--text-dark);
+}
+
+@keyframes ticker {
+    0% { transform: translateX(100%); }
+    100% { transform: translateX(-100%); }
+}
+
+.ticker-sources {
+    padding: 0 24px;
+    border-left: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    flex-shrink: 0;
+    background: var(--pure-white);
+}
+
+/* Responsive breakpoints */
+@media (max-width: 1400px) {
+    .hero-section { grid-template-columns: 3fr 2fr; }
+}
+
+@media (max-width: 1100px) {
+    /* Off-canvas drawer. Animates `transform` — which is what .sidebar's
+       transition actually declares — rather than `left`, which it does not. */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        transform: translateX(-100%);
+        box-shadow: 4px 0 24px rgba(0,0,0,0.1);
+        z-index: 30;
+    }
+    .sidebar.open {
+        transform: translateX(0);
+    }
+    .hero-section { grid-template-columns: 1fr; }
+    .hero-right-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); }
+}
