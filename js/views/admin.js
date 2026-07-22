@@ -16,15 +16,24 @@ import {
 } from '../components.js';
 import { mkChart, donutOptions, SERIES_COLORS } from '../charts.js';
 import { refresh } from '../router.js';
-import { USERS, ROLES, THRESHOLDS, INTEGRATIONS, AUDIT_LOG } from '../data/mock.js';
+import { THRESHOLDS, INTEGRATIONS, AUDIT_LOG } from '../data/mock.js';
+import {
+    listUsers, createUser, deleteUser, roleList, roleNames,
+    allowedRoutesFor, ROLE_ACCESS, MODULES
+} from '../data/users.js';
+import { getSession } from '../auth.js';
 
-const ACTIVE_USERS = USERS.filter((u) => u.status === 'active');
 const CONNECTED = INTEGRATIONS.filter((i) => i.status === 'connected');
 const DEGRADED = INTEGRATIONS.filter((i) => i.status !== 'connected');
-const ROLE_SEATS = ROLES.reduce((sum, r) => sum + r.users, 0);
+
+/** Human summary of how many modules a role reaches. */
+function accessSummary(role) {
+    const n = allowedRoutesFor(role).length;
+    return n >= MODULES.length ? 'Full access' : `${n} of ${MODULES.length} modules`;
+}
 
 const TABS = [
-    { value: 'users', label: 'Users' },
+    { value: 'users', label: 'Access Management' },
     { value: 'roles', label: 'Roles' },
     { value: 'thresholds', label: 'Thresholds' },
     { value: 'integrations', label: 'Integrations' },
@@ -43,22 +52,25 @@ function commandBar() {
 /* ------------------------------------------------------------ Hero KPIs */
 
 function heroKpis() {
+    const users = listUsers();
+    const roles = roleList();
+    const admins = users.filter((u) => ROLE_ACCESS[u.role] && ROLE_ACCESS[u.role].canManageUsers).length;
     return `
         <section class="kpi-section">
             ${kpi({
                 title: 'User Accounts',
-                value: USERS.length,
+                value: users.length,
                 icon: 'users',
                 tone: 'blue',
-                delta: { value: `${ACTIVE_USERS.length} active`, direction: 'up', sentiment: 'good' },
-                context: `${USERS.length - ACTIVE_USERS.length} inactive`
+                delta: { value: `${admins} with admin rights`, direction: 'flat', sentiment: 'neutral' },
+                context: 'Can sign in to the platform'
             })}
             ${kpi({
                 title: 'Roles Defined',
-                value: ROLES.length,
+                value: roles.length,
                 icon: 'shield-check',
                 tone: 'purple',
-                delta: { value: `${num(ROLE_SEATS)} seats assigned`, direction: 'flat', sentiment: 'neutral' },
+                delta: { value: `${num(users.length)} seats assigned`, direction: 'flat', sentiment: 'neutral' },
                 context: 'Statewide RBAC'
             })}
             ${kpi({
@@ -88,59 +100,130 @@ function heroKpis() {
         </section>`;
 }
 
-/* ------------------------------------------------------------ Users panel */
+/* -------------------------------------------------- Access Management panel */
+
+const initial = (name) => (name || 'U').trim().charAt(0).toUpperCase();
+
+/** The user directory rows. Rebuilt in place after a create/delete. */
+function userTable() {
+    const me = getSession();
+    return table({
+        className: 'access-table',
+        columns: [
+            {
+                key: 'name',
+                label: 'User',
+                render: (u) => `
+                    <div class="user-cell">
+                        <span class="user-avatar tint-${esc((ROLE_ACCESS[u.role] || {}).tone || 'blue')}">${esc(initial(u.name))}</span>
+                        <span>
+                            <span class="font-semibold">${esc(u.name)}</span>
+                            <span class="text-xs text-secondary block">${esc(u.email)}</span>
+                        </span>
+                    </div>`
+            },
+            { key: 'role', label: 'Role', render: (u) => badge(u.role, (ROLE_ACCESS[u.role] || {}).tone || 'blue') },
+            { key: 'access', label: 'Access', render: (u) => `<span class="text-secondary">${esc(accessSummary(u.role))}</span>` },
+            { key: 'createdAt', label: 'Created', render: (u) => `<span class="font-mono text-xs">${esc(u.createdAt)}</span>` },
+            {
+                key: 'actions',
+                label: '',
+                align: 'right',
+                render: (u) => {
+                    const isSelf = me && me.email && me.email.toLowerCase() === u.email.toLowerCase();
+                    return isSelf
+                        ? `<span class="badge tint-gray">You</span>`
+                        : `<button class="btn-icon danger-icon" data-del-user="${esc(u.id)}"
+                                   title="Delete user" aria-label="Delete ${esc(u.name)}"><i data-lucide="trash-2"></i></button>`;
+                }
+            }
+        ],
+        rows: listUsers(),
+        empty: 'No accounts yet — create one to get started'
+    });
+}
+
+function createModal() {
+    const options = roleNames()
+        .map((r) => `<option value="${esc(r)}">${esc(r)}</option>`)
+        .join('');
+    return `
+        <div class="modal-overlay" id="user-modal" hidden>
+            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
+                <div class="modal-header">
+                    <div class="modal-title-wrap">
+                        <span class="modal-icon"><i data-lucide="user-plus"></i></span>
+                        <h3 id="user-modal-title">Create New User</h3>
+                    </div>
+                    <button class="modal-close" id="user-modal-close" type="button" aria-label="Close"><i data-lucide="x"></i></button>
+                </div>
+                <form class="modal-body" id="user-form" novalidate>
+                    <div class="form-error" id="user-form-error" hidden>
+                        <i data-lucide="alert-circle"></i><span id="user-form-error-text"></span>
+                    </div>
+                    <div class="form-group">
+                        <label for="uf-name">Full Name</label>
+                        <input type="text" id="uf-name" class="form-input" placeholder="e.g. Inspector S. Kumar" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="uf-email">Email Address</label>
+                        <input type="email" id="uf-email" class="form-input" placeholder="name@jharkhand.gov.in" autocomplete="off">
+                    </div>
+                    <div class="form-group">
+                        <label for="uf-pass">Password</label>
+                        <input type="password" id="uf-pass" class="form-input" placeholder="At least 6 characters" autocomplete="new-password">
+                    </div>
+                    <div class="form-group">
+                        <label for="uf-role">Role</label>
+                        <select id="uf-role" class="form-input form-select">${options}</select>
+                        <span class="form-hint" id="uf-role-hint"></span>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn" id="user-cancel">Cancel</button>
+                        <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Create User</button>
+                    </div>
+                </form>
+            </div>
+        </div>`;
+}
 
 function usersPanel() {
     return `
         <div data-panel="users">
             <section class="section-heading">
-                <h2>User Accounts</h2>
+                <h2>Access Management</h2>
                 <span class="section-rule"></span>
             </section>
             <section class="trends-section">
                 ${card({
-                    title: 'Directory',
-                    subtitle: `${ACTIVE_USERS.length} of ${USERS.length} accounts active`,
-                    actions: `${iconButton('download', 'Export directory')}`,
-                    body: table({
-                        columns: [
-                            {
-                                key: 'name',
-                                label: 'User',
-                                render: (u) => `
-                                    <span class="font-semibold">${esc(u.name)}</span>
-                                    <div class="text-xs text-secondary">${esc(u.email)}</div>`
-                            },
-                            { key: 'role', label: 'Role', render: (u) => badge(u.role, 'purple') },
-                            { key: 'district', label: 'District', render: (u) => esc(u.district) },
-                            { key: 'status', label: 'Status', render: (u) => statusDot(u.status) },
-                            {
-                                key: 'lastLogin',
-                                label: 'Last login',
-                                render: (u) => `<span class="font-mono text-xs">${esc(u.lastLogin)}</span>`
-                            }
-                        ],
-                        rows: USERS,
-                        empty: 'No user accounts provisioned'
-                    })
+                    title: 'User Accounts',
+                    subtitle: 'Create sign-in profiles and assign each a role. Roles control which modules a user can open.',
+                    actions: `${iconButton('download', 'Export directory')}${button('New User', { icon: 'user-plus', variant: 'primary', attrs: 'id="new-user-btn"' })}`,
+                    body: `<div id="user-table-wrap">${userTable()}</div>`
                 })}
             </section>
+            ${createModal()}
         </div>`;
 }
 
 /* ------------------------------------------------------------ Roles panel */
 
 function roleCard(role) {
+    const moduleBadges = role.routes
+        .map((key) => {
+            const mod = MODULES.find((m) => m.key === key);
+            return mod ? badge(mod.label, role.tone) : '';
+        })
+        .join('');
     return card({
         title: role.name,
-        subtitle: `${num(role.users)} users · ${role.permissions.length} permissions`,
+        subtitle: `${num(role.userCount)} user${role.userCount === 1 ? '' : 's'} · ${accessSummary(role.name).toLowerCase()}`,
         bodyClass: 'flex-col',
         body: `
-            ${statRow('Assigned users', `<span class="font-semibold">${esc(num(role.users))}</span>`)}
-            <div class="chart-caption mt-3">Permissions</div>
-            <div class="badge-group mt-2">
-                ${role.permissions.map((p) => badge(p, 'blue')).join('')}
-            </div>`
+            <p class="text-sm text-secondary">${esc(role.description)}</p>
+            ${role.canManageUsers ? `<div class="mt-2">${badge('Can manage users & roles', 'purple')}</div>` : ''}
+            <div class="chart-caption mt-3">Module access</div>
+            <div class="badge-group mt-2">${moduleBadges}</div>`
     });
 }
 
@@ -152,7 +235,7 @@ function rolesPanel() {
                 <span class="section-rule"></span>
             </section>
             <section class="operational-section">
-                ${ROLES.map(roleCard).join('')}
+                ${roleList().map(roleCard).join('')}
             </section>
         </div>`;
 }
@@ -349,10 +432,85 @@ export default {
 
         // Working exports (the rest of the admin actions are read-only here).
         root.querySelector('[aria-label="Export directory"]')?.addEventListener('click', () =>
-            downloadCsv(USERS, ['id', 'name', 'email', 'role', 'district', 'status', 'lastLogin'], 'user-directory.csv')
+            downloadCsv(listUsers(), ['id', 'name', 'email', 'role', 'createdAt'], 'user-directory.csv')
         );
         root.querySelector('[aria-label="Export log"]')?.addEventListener('click', () =>
             downloadCsv(AUDIT_LOG, ['id', 'at', 'user', 'action', 'target', 'ip'], 'audit-log.csv')
         );
+
+        bindAccessManagement(root);
     }
 };
+
+/* ------------------------------------------------ Access Management wiring */
+
+function bindAccessManagement(root) {
+    const modal = root.querySelector('#user-modal');
+    if (!modal) return;
+
+    const openModal = () => {
+        modal.hidden = false;
+        root.querySelector('#uf-name')?.focus();
+        updateRoleHint();
+    };
+    const closeModal = () => {
+        modal.hidden = true;
+        root.querySelector('#user-form')?.reset();
+        hideError();
+    };
+    const showError = (msg) => {
+        const box = root.querySelector('#user-form-error');
+        root.querySelector('#user-form-error-text').textContent = msg;
+        box.hidden = false;
+        if (window.lucide) window.lucide.createIcons();
+    };
+    const hideError = () => {
+        const box = root.querySelector('#user-form-error');
+        if (box) box.hidden = true;
+    };
+    const updateRoleHint = () => {
+        const role = root.querySelector('#uf-role')?.value;
+        const hint = root.querySelector('#uf-role-hint');
+        if (hint && role) hint.textContent = (ROLE_ACCESS[role]?.description || '') + ` (${accessSummary(role).toLowerCase()})`;
+    };
+
+    root.querySelector('#new-user-btn')?.addEventListener('click', openModal);
+    root.querySelector('#user-modal-close')?.addEventListener('click', closeModal);
+    root.querySelector('#user-cancel')?.addEventListener('click', closeModal);
+    root.querySelector('#uf-role')?.addEventListener('change', updateRoleHint);
+    // Click on the dimmed backdrop (but not the dialog) closes it.
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+    root.querySelector('#user-form')?.addEventListener('submit', (e) => {
+        e.preventDefault();
+        const result = createUser({
+            name: root.querySelector('#uf-name').value,
+            email: root.querySelector('#uf-email').value,
+            password: root.querySelector('#uf-pass').value,
+            role: root.querySelector('#uf-role').value
+        });
+        if (!result.ok) {
+            showError(result.error);
+            return;
+        }
+        // Re-render the whole view so the table, KPIs and roles stay consistent.
+        refresh();
+    });
+
+    // Delete via event delegation on the panel (survives table re-render).
+    const me = getSession();
+    root.querySelector('[data-panel="users"]')?.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-del-user]');
+        if (!btn) return;
+        const id = btn.dataset.delUser;
+        const user = listUsers().find((u) => u.id === id);
+        if (!user) return;
+        if (!window.confirm(`Delete the account for ${user.name} (${user.email})? They will no longer be able to sign in.`)) return;
+        const result = deleteUser(id, me && me.email);
+        if (!result.ok) {
+            window.alert(result.error);
+            return;
+        }
+        refresh();
+    });
+}

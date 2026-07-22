@@ -21,10 +21,16 @@
     <link rel="stylesheet" href="css/layout.css">
     <link rel="stylesheet" href="css/components.css">
     <link rel="stylesheet" href="css/views.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/rbac.css">
 </head>
 
 <body>
-    <div class="app-container">
+    <!-- Login gate: rendered by js/auth.js, sits in front of the shell. -->
+    <div id="auth-root" hidden></div>
+
+    <!-- Hidden until the auth gate hands control to bootApp() in js/app.js. -->
+    <div class="app-container" hidden>
         <!-- Sidebar -->
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
@@ -160,7 +166,7 @@
                                     <button class="popover-item" id="theme-toggle"><i data-lucide="moon"></i> <span>Dark
                                             mode</span></button>
                                     <div class="popover-divider"></div>
-                                    <button class="popover-item danger"><i data-lucide="log-out"></i> Sign out</button>
+                                    <button class="popover-item danger" id="sign-out-btn"><i data-lucide="log-out"></i> Sign out</button>
                                 </div>
                             </div>
                         </div>

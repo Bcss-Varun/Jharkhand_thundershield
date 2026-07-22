@@ -5,7 +5,9 @@
  * The shell renders once. Only #view is replaced on navigation.
  */
 
-import { register, start, refresh } from './router.js';
+import { register, start, refresh, setRouteGuard } from './router.js';
+import { isAuthenticated, getSession, clearSession, renderLoginScreen, applyUserToShell } from './auth.js';
+import { allowedRoutesFor } from './data/users.js';
 import {
     ADVISORY_TEXT, DATA_SOURCES, NOTIFICATIONS,
     SENSOR_HEALTH, WEATHER_NOW, sensorCounts, alertCounts
@@ -209,6 +211,57 @@ function bindSearch() {
     });
 }
 
+/* ---------------------------------------------------------------- Sign out */
+
+function bindSignOut() {
+    const btn = document.getElementById('sign-out-btn');
+    if (!btn) return;
+    btn.addEventListener('click', () => {
+        clearSession();
+        // Full reload is the cleanest reset: tears down charts/maps/timers and
+        // re-runs the gate, which now finds no session and shows login.
+        window.location.reload();
+    });
+}
+
+/* ------------------------------------------------------- Access control */
+
+/**
+ * Enforce the signed-in user's role across the shell:
+ *  - hide sidebar modules (and now-empty group labels) the role can't reach;
+ *  - install a router guard so direct hash links to blocked routes are denied;
+ *  - bounce the current route to the dashboard if it's off-limits.
+ */
+function applyAccessControl(user) {
+    const allowed = new Set(allowedRoutesFor(user && user.role));
+    const routeOf = (a) => (a.getAttribute('href') || '').replace(/^#\//, '').split('?')[0];
+
+    document.querySelectorAll('.sidebar-nav li').forEach((li) => {
+        const link = li.querySelector('a');
+        if (!link) return; // group label — handled below
+        li.hidden = !allowed.has(routeOf(link));
+    });
+
+    // Hide a group label when every module under it is hidden.
+    const items = Array.from(document.querySelectorAll('.sidebar-nav li'));
+    items.forEach((li, i) => {
+        if (!li.classList.contains('nav-group-label')) return;
+        let anyVisible = false;
+        for (let j = i + 1; j < items.length; j++) {
+            if (items[j].classList.contains('nav-group-label')) break;
+            if (!items[j].hidden) { anyVisible = true; break; }
+        }
+        li.hidden = !anyVisible;
+    });
+
+    setRouteGuard((path) => allowed.has(path));
+
+    // If the user landed on (or deep-linked to) a route their role can't open,
+    // send them to the dashboard, which every role can reach.
+    const currentPath = (window.location.hash.replace(/^#\/?/, '').split('?')[0] || 'dashboard');
+    if (!allowed.has(currentPath)) window.location.hash = '#/dashboard';
+}
+
 /* ------------------------------------------------------------------ Routes */
 
 function registerRoutes() {
@@ -227,21 +280,48 @@ function registerRoutes() {
 
 /* -------------------------------------------------------------------- Init */
 
-// Immediate bootstrap execution since ES modules load deferred by default.
-lucide.createIcons();
-startClock();
-fillTicker();
-fillSystemMetrics();
-bindNotifications();
-bindPopover('user-btn', 'user-popover');
-bindTheme();
-bindSidebar();
-bindSearch();
-document.addEventListener('click', () => closePopovers(null));
-document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') closePopovers(null);
-});
+/** Wire the shell and start routing. Runs only once a session exists. */
+function bootApp(user) {
+    document.querySelector('.app-container').hidden = false;
+    applyUserToShell(user);
 
-registerRoutes();
-start();
+    lucide.createIcons();
+    startClock();
+    fillTicker();
+    fillSystemMetrics();
+    bindNotifications();
+    bindPopover('user-btn', 'user-popover');
+    bindTheme();
+    bindSidebar();
+    bindSearch();
+    bindSignOut();
+    document.addEventListener('click', () => closePopovers(null));
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closePopovers(null);
+    });
+
+    applyAccessControl(user);
+    registerRoutes();
+    start();
+}
+
+// Apply the stored theme before anything paints so the login gate matches it.
+document.documentElement.dataset.theme = localStorage.getItem('ag-theme') || 'light';
+lucide.createIcons();
+
+if (isAuthenticated()) {
+    // Reload of an existing session — keep whatever route the user was on.
+    bootApp(getSession());
+} else {
+    // Keep the shell hidden behind the gate until the user signs in.
+    document.querySelector('.app-container').hidden = true;
+    document.getElementById('auth-root').hidden = false;
+    renderLoginScreen((user) => {
+        // A fresh sign-in always lands on the Dashboard, regardless of any
+        // stale hash left over from a previous session (sign-out reloads the
+        // page, which preserves the old hash).
+        window.location.hash = '#/dashboard';
+        bootApp(user);
+    });
+}
 

@@ -1,0 +1,176 @@
+/* ================================================= Access Management (RBAC)
+   Styles for the Administration → Access Management screen: the user table,
+   the "Create New User" modal, and the role dropdown. Uses the shared design
+   tokens so it matches the rest of the console in light and dark. */
+
+.block { display: block; }
+
+/* ------------------------------------------------------- User directory */
+
+.user-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+.user-avatar {
+    flex: none;
+    width: 34px;
+    height: 34px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: var(--radius-full);
+    font-size: var(--text-sm);
+    font-weight: 700;
+}
+
+/* Destructive row action — red only on hover so the table stays calm. */
+.btn-icon.danger-icon:hover {
+    color: var(--critical-red);
+    border-color: var(--critical-red);
+    background-color: var(--tint-red);
+}
+
+.access-table td { vertical-align: middle; }
+
+/* ------------------------------------------------------------- Modal */
+
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 1500;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background-color: rgba(16, 24, 40, 0.55);
+    backdrop-filter: blur(2px);
+    animation: modal-fade 160ms ease both;
+}
+@keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
+
+.modal {
+    width: 100%;
+    max-width: 440px;
+    background-color: var(--surface);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-popover);
+    animation: modal-rise 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    max-height: calc(100vh - 2 * var(--space-4));
+    overflow-y: auto;
+}
+@keyframes modal-rise {
+    from { opacity: 0; transform: translateY(10px) scale(0.98); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-3);
+    padding: var(--space-5) var(--space-5) var(--space-4);
+    border-bottom: 1px solid var(--border-color);
+}
+.modal-title-wrap {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+}
+.modal-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: var(--radius-md);
+    background-color: var(--tint-blue);
+    color: var(--primary-blue);
+}
+.modal-icon i { width: 18px; height: 18px; }
+.modal-header h3 {
+    font-size: var(--text-lg);
+    font-weight: 700;
+}
+.modal-close {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: none;
+    background: none;
+    color: var(--text-muted);
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: color var(--transition), background-color var(--transition);
+}
+.modal-close:hover { color: var(--text-dark); background-color: var(--bg-light-gray); }
+.modal-close i { width: 18px; height: 18px; }
+
+.modal-body {
+    padding: var(--space-5);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+.form-group label {
+    font-size: var(--text-sm);
+    font-weight: 600;
+    color: var(--text-dark);
+}
+.form-input {
+    width: 100%;
+    padding: 11px var(--space-3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    background-color: var(--surface);
+    color: var(--text-dark);
+    font-size: var(--text-md);
+    transition: border-color var(--transition), box-shadow var(--transition);
+}
+.form-input::placeholder { color: var(--text-muted); }
+.form-input:focus {
+    outline: none;
+    border-color: var(--primary-blue);
+    box-shadow: 0 0 0 3px var(--tint-blue);
+}
+.form-select { cursor: pointer; appearance: auto; }
+
+.form-hint {
+    font-size: var(--text-xs);
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.form-error {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-3);
+    border-radius: var(--radius-md);
+    background-color: var(--tint-red);
+    color: var(--critical-red);
+    font-size: var(--text-sm);
+    font-weight: 500;
+}
+.form-error i { width: 16px; height: 16px; flex: none; }
+
+.modal-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-3);
+    margin-top: var(--space-2);
+}
+
+@media (max-width: 480px) {
+    .modal-footer { flex-direction: column-reverse; }
+    .modal-footer .btn { width: 100%; }
+}

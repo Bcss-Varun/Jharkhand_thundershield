@@ -17,6 +17,31 @@
 const routes = new Map();
 let current = null;
 let disposers = [];
+let accessGuard = null;
+
+/**
+ * Install a role-based access check. `fn(path)` returns true if the active
+ * user may open that route. Blocked routes render an "Access Restricted"
+ * screen instead of the view — this is what enforces RBAC at the router.
+ */
+export function setRouteGuard(fn) {
+    accessGuard = fn;
+}
+
+function accessDenied(path) {
+    return {
+        title: 'Access Restricted',
+        subtitle: 'Your role does not permit this section',
+        render: () => `
+            <div class="empty-state">
+                <i data-lucide="shield-alert"></i>
+                <h2>Access restricted</h2>
+                <p>Your role does not have permission to view <code>#/${path}</code>.
+                   Contact a Super Admin if you need access.</p>
+                <a class="btn btn-primary" href="#/dashboard">Back to Dashboard</a>
+            </div>`
+    };
+}
 
 /** Register a view module under a hash path, e.g. 'dashboard'. */
 export function register(path, view) {
@@ -90,7 +115,12 @@ function notFound(path) {
 
 function renderRoute() {
     const path = pathFromHash();
-    const view = routes.get(path) || notFound(path);
+    let view;
+    if (accessGuard && !accessGuard(path)) {
+        view = accessDenied(path);
+    } else {
+        view = routes.get(path) || notFound(path);
+    }
     const root = document.getElementById('view');
 
     if (current && current.view.unmount) {
