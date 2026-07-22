@@ -692,16 +692,19 @@
     border-top: 1px solid var(--border-color);
 }
 
-/* Map popup — wider dialog, edge-to-edge map body */
-.modal-map {
+/* Map popup — wider dialog, edge-to-edge map body.
+   ID-scoped so these beat the generic .modal rules in rbac.css (loaded later),
+   which would otherwise clamp this to 440px and re-pad the edge-to-edge body. */
+#sensors-map-modal .modal-map {
     max-width: 1120px;
 }
-.map-modal-body {
+#sensors-map-modal .map-modal-body {
     padding: 0;
+    display: block;
     position: relative;
     height: min(700px, 82vh);
 }
-.map-modal-body .map-view {
+#sensors-map-modal .map-modal-body .map-view {
     position: absolute;
     inset: 0;
     width: 100%;
@@ -709,9 +712,16 @@
     min-height: 0;
 }
 
-/* Add-sensor 3-step wizard */
-.modal-wizard {
+/* Add-sensor 3-step wizard.
+   ID-scoped so the wizard width and a block (non-flex, scrollable) body win over
+   rbac.css's later, equal-specificity .modal / .modal-body rules. */
+#add-sensor-modal .modal-wizard {
     max-width: 780px;
+}
+#add-sensor-modal .modal-body {
+    display: block;
+    padding: var(--space-5);
+    overflow-y: auto;
 }
 .wizard-steps {
     display: flex;

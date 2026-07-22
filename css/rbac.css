@@ -33,9 +33,12 @@
 
 .access-table td { vertical-align: middle; }
 
-/* ------------------------------------------------------------- Modal */
+/* ------------------------------------------------------------- Modal
+   Namespaced as .rbac-modal-* so these compact "Create New User" dialog styles
+   never collide with the wider sensor modals in views.css (both files load
+   globally and previously fought over a shared generic `.modal`). */
 
-.modal-overlay {
+.rbac-modal-overlay {
     position: fixed;
     inset: 0;
     z-index: 1500;
@@ -45,27 +48,27 @@
     padding: var(--space-4);
     background-color: rgba(16, 24, 40, 0.55);
     backdrop-filter: blur(2px);
-    animation: modal-fade 160ms ease both;
+    animation: rbac-modal-fade 160ms ease both;
 }
-@keyframes modal-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes rbac-modal-fade { from { opacity: 0; } to { opacity: 1; } }
 
-.modal {
+.rbac-modal {
     width: 100%;
     max-width: 440px;
     background-color: var(--surface);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-lg);
     box-shadow: var(--shadow-popover);
-    animation: modal-rise 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
+    animation: rbac-modal-rise 180ms cubic-bezier(0.4, 0, 0.2, 1) both;
     max-height: calc(100vh - 2 * var(--space-4));
     overflow-y: auto;
 }
-@keyframes modal-rise {
+@keyframes rbac-modal-rise {
     from { opacity: 0; transform: translateY(10px) scale(0.98); }
     to   { opacity: 1; transform: translateY(0) scale(1); }
 }
 
-.modal-header {
+.rbac-modal-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -73,12 +76,12 @@
     padding: var(--space-5) var(--space-5) var(--space-4);
     border-bottom: 1px solid var(--border-color);
 }
-.modal-title-wrap {
+.rbac-modal-title-wrap {
     display: flex;
     align-items: center;
     gap: var(--space-3);
 }
-.modal-icon {
+.rbac-modal-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -88,12 +91,12 @@
     background-color: var(--tint-blue);
     color: var(--primary-blue);
 }
-.modal-icon i { width: 18px; height: 18px; }
-.modal-header h3 {
+.rbac-modal-icon i { width: 18px; height: 18px; }
+.rbac-modal-header h3 {
     font-size: var(--text-lg);
     font-weight: 700;
 }
-.modal-close {
+.rbac-modal-close {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -106,10 +109,10 @@
     cursor: pointer;
     transition: color var(--transition), background-color var(--transition);
 }
-.modal-close:hover { color: var(--text-dark); background-color: var(--bg-light-gray); }
-.modal-close i { width: 18px; height: 18px; }
+.rbac-modal-close:hover { color: var(--text-dark); background-color: var(--bg-light-gray); }
+.rbac-modal-close i { width: 18px; height: 18px; }
 
-.modal-body {
+.rbac-modal-body {
     padding: var(--space-5);
     display: flex;
     flex-direction: column;
@@ -163,7 +166,7 @@
 }
 .form-error i { width: 16px; height: 16px; flex: none; }
 
-.modal-footer {
+.rbac-modal-footer {
     display: flex;
     justify-content: flex-end;
     gap: var(--space-3);
@@ -171,6 +174,6 @@
 }
 
 @media (max-width: 480px) {
-    .modal-footer { flex-direction: column-reverse; }
-    .modal-footer .btn { width: 100%; }
+    .rbac-modal-footer { flex-direction: column-reverse; }
+    .rbac-modal-footer .btn { width: 100%; }
 }

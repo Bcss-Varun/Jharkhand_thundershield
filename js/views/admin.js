@@ -148,16 +148,16 @@ function createModal() {
         .map((r) => `<option value="${esc(r)}">${esc(r)}</option>`)
         .join('');
     return `
-        <div class="modal-overlay" id="user-modal" hidden>
-            <div class="modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
-                <div class="modal-header">
-                    <div class="modal-title-wrap">
-                        <span class="modal-icon"><i data-lucide="user-plus"></i></span>
+        <div class="rbac-modal-overlay" id="user-modal" hidden>
+            <div class="rbac-modal" role="dialog" aria-modal="true" aria-labelledby="user-modal-title">
+                <div class="rbac-modal-header">
+                    <div class="rbac-modal-title-wrap">
+                        <span class="rbac-modal-icon"><i data-lucide="user-plus"></i></span>
                         <h3 id="user-modal-title">Create New User</h3>
                     </div>
-                    <button class="modal-close" id="user-modal-close" type="button" aria-label="Close"><i data-lucide="x"></i></button>
+                    <button class="rbac-modal-close" id="user-modal-close" type="button" aria-label="Close"><i data-lucide="x"></i></button>
                 </div>
-                <form class="modal-body" id="user-form" novalidate>
+                <form class="rbac-modal-body" id="user-form" novalidate>
                     <div class="form-error" id="user-form-error" hidden>
                         <i data-lucide="alert-circle"></i><span id="user-form-error-text"></span>
                     </div>
@@ -178,7 +178,7 @@ function createModal() {
                         <select id="uf-role" class="form-input form-select">${options}</select>
                         <span class="form-hint" id="uf-role-hint"></span>
                     </div>
-                    <div class="modal-footer">
+                    <div class="rbac-modal-footer">
                         <button type="button" class="btn" id="user-cancel">Cancel</button>
                         <button type="submit" class="btn btn-primary"><i data-lucide="check"></i> Create User</button>
                     </div>
